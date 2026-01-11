@@ -9,6 +9,7 @@ import { map } from 'rxjs/operators';
 
 export interface ApiResponse<T> {
   success: boolean;
+  message?: string;
   data: T;
   timestamp: string;
 }
@@ -19,12 +20,13 @@ export class TransformInterceptor<T> implements NestInterceptor<
   ApiResponse<T>
 > {
   intercept(
-    context: ExecutionContext,
+    _context: ExecutionContext,
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
     return next.handle().pipe(
-      map((data) => ({
+      map(({ message, data }) => ({
         success: true,
+        message,
         data,
         timestamp: new Date().toISOString(),
       })),

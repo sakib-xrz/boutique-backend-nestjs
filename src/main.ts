@@ -12,13 +12,13 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  const port = configService.get<number>('port', 8000);
-  const apiPrefix = configService.get<string>('apiPrefix', 'api/v1');
+  const port = configService.get<number>('PORT', 8000);
+  const apiPrefix = configService.get<string>('API_PREFIX', 'api/v1');
   const normalizedApiPrefix = apiPrefix.startsWith('/')
     ? apiPrefix
     : `/${apiPrefix}`;
   const corsOrigin = configService.get<string>(
-    'corsOrigin',
+    'CORS_ORIGIN',
     'http://localhost:3000',
   );
   const frontendUrls = corsOrigin?.split(',');
@@ -78,15 +78,12 @@ async function bootstrap() {
     .setTitle('Boutique Backend')
     .setDescription('Boutique Backend API documentation')
     .setVersion('1.0')
+    .addServer('http://localhost:8000')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
 
-  SwaggerModule.setup(`${apiPrefix}/docs`, app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+  SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
 
   await app.listen(port);
   console.log(
