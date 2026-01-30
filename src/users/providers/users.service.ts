@@ -1,4 +1,4 @@
-import { CreateUserDto } from './../auth/dtos/create-user.dto';
+import { CreateUserDto } from '../../auth/dtos/create-user.dto';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 
@@ -9,6 +9,15 @@ export class UsersService {
   async findUserByEmail(email: string) {
     return this.prismaService.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        role: true,
+        email_verified: true,
+        created_at: true,
+      },
     });
   }
 

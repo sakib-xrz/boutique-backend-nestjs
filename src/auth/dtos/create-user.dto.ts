@@ -9,7 +9,7 @@ import {
 
 export class CreateUserDto {
   @ApiProperty({
-    example: 'test@gmail.com',
+    example: 'test@example.com',
   })
   @IsEmail({}, { message: 'email must be a valid email address' })
   email: string;

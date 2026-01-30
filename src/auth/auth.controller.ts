@@ -1,14 +1,32 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
-import { AuthService } from './auth.service';
+import { AuthService } from './providers/auth.service';
+import { LoginDto } from './dtos/login.dto';
+import { ApiResponse } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @ApiResponse({ status: 201, description: 'User registered successfully.' })
+  @HttpCode(HttpStatus.CREATED)
   async register(@Body() createUserDto: CreateUserDto) {
     const result = await this.authService.register(createUserDto);
-    return result;
+    return {
+      message: 'User registered successfully',
+      data: result,
+    };
+  }
+
+  @Post('login')
+  @ApiResponse({ status: 200, description: 'Login successful.' })
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto) {
+    const result = await this.authService.login(loginDto);
+    return {
+      message: 'Login successful',
+      data: result,
+    };
   }
 }
