@@ -1,12 +1,13 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Auth, AuthType } from 'src/auth/decorator/auth/auth.decorator';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/generated/prisma/enums';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
   @Get()
-  @Auth(AuthType.BEARER)
+  @Roles(Role.ADMIN)
   findAll() {
     return {
       message: 'Users fetched successfully',

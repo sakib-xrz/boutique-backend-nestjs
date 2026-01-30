@@ -3,11 +3,13 @@ import { CreateUserDto } from './dtos/create-user.dto';
 import { AuthService } from './providers/auth.service';
 import { LoginDto } from './dtos/login.dto';
 import { ApiResponse } from '@nestjs/swagger';
+import { Public } from './decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('register')
   @ApiResponse({ status: 201, description: 'User registered successfully.' })
   @HttpCode(HttpStatus.CREATED)
@@ -19,6 +21,7 @@ export class AuthController {
     };
   }
 
+  @Public()
   @Post('login')
   @ApiResponse({ status: 200, description: 'Login successful.' })
   @HttpCode(HttpStatus.OK)
