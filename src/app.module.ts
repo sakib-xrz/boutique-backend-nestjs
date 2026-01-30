@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD } from '@nestjs/core/constants';
 import { AccessTokenGuard } from './auth/guards/access-token.guard';
@@ -13,6 +14,7 @@ import { AccessTokenGuard } from './auth/guards/access-token.guard';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    PrismaModule,
     JwtModule.registerAsync({
       global: true,
       useFactory: (configService: ConfigService) => ({
