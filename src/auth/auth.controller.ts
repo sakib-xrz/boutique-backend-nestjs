@@ -1,8 +1,16 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Request,
+} from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { AuthService } from './providers/auth.service';
 import { LoginDto } from './dtos/login.dto';
-import { ApiResponse } from '@nestjs/swagger';
+import { RefreshTokenDto } from './dtos/refresh-token.dto';
+import { ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
 
 @Controller('auth')
@@ -30,6 +38,29 @@ export class AuthController {
     return {
       message: 'Login successful',
       data: result,
+    };
+  }
+
+  @Public()
+  @Post('refresh')
+  @ApiResponse({ status: 200, description: 'Token refreshed successfully.' })
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
+    const result = await this.authService.refresh(refreshTokenDto);
+    return {
+      message: 'Token refreshed successfully',
+      data: result,
+    };
+  }
+
+  @Post('logout')
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Logged out successfully.' })
+  @HttpCode(HttpStatus.OK)
+  async logout(@Request() req: { user: { sub: string } }) {
+    const result = await this.authService.logout(req.user.sub);
+    return {
+      message: result.message,
     };
   }
 }

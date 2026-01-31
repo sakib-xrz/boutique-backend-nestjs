@@ -1,18 +1,21 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UsersService } from 'src/users/providers/users.service';
-import { JwtService } from '@nestjs/jwt/dist/jwt.service';
-import { ConfigService } from '@nestjs/config';
 import { BcryptProvider } from './bcrypt.provider';
+import { TokenProvider } from './token.provider';
 import { LoginDto } from '../dtos/login.dto';
+import { RefreshTokenDto } from '../dtos/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly configService: ConfigService,
     private readonly bcryptProvider: BcryptProvider,
+    private readonly tokenProvider: TokenProvider,
     private readonly usersService: UsersService,
-    private readonly jwtService: JwtService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
@@ -33,17 +36,15 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email, role: user.role };
 
-    const access_token = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-      audience: this.configService.get<string>('JWT_TOKEN_AUDIENCE'),
-      issuer: this.configService.get<string>('JWT_TOKEN_ISSUER'),
-      expiresIn: parseInt(
-        this.configService.get<string>('JWT_ACCESS_TOKEN_TTL') ?? '3600',
-      ),
-    });
+    const access_token = this.tokenProvider.generateAccessToken(payload);
+    const refresh_token = this.tokenProvider.generateRefreshToken(payload);
+
+    const hashedRefreshToken = this.tokenProvider.hashToken(refresh_token);
+    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
 
     return {
       access_token,
+      refresh_token,
       user,
     };
   }
@@ -54,9 +55,7 @@ export class AuthService {
     const user = await this.usersService.findUserByEmail(email);
 
     if (!user) {
-      return {
-        message: 'Invalid email or password',
-      };
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const isPasswordValid = await this.bcryptProvider.comparePassword(
@@ -65,28 +64,70 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      return {
-        message: 'Invalid email or password',
-      };
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const payload = { sub: user.id, email: user.email, role: user.role };
 
-    const access_token = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-      audience: this.configService.get<string>('JWT_TOKEN_AUDIENCE'),
-      issuer: this.configService.get<string>('JWT_TOKEN_ISSUER'),
-      expiresIn: parseInt(
-        this.configService.get<string>('JWT_ACCESS_TOKEN_TTL') ?? '3600',
-      ),
-    });
+    const access_token = this.tokenProvider.generateAccessToken(payload);
+    const refresh_token = this.tokenProvider.generateRefreshToken(payload);
+
+    const hashedRefreshToken = this.tokenProvider.hashToken(refresh_token);
+    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
 
     return {
       access_token,
+      refresh_token,
       user: userWithoutPassword,
     };
+  }
+
+  async refresh(refreshTokenDto: RefreshTokenDto) {
+    try {
+      const decoded = this.tokenProvider.verifyRefreshToken(
+        refreshTokenDto.token,
+      );
+
+      if (decoded.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      const hashedToken = this.tokenProvider.hashToken(refreshTokenDto.token);
+      const user = await this.usersService.findByRefreshToken(hashedToken);
+
+      if (!user) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const payload = { sub: user.id, email: user.email, role: user.role };
+      const access_token = this.tokenProvider.generateAccessToken(payload);
+      const new_refresh_token =
+        this.tokenProvider.generateRefreshToken(payload);
+
+      const newHashedRefreshToken =
+        this.tokenProvider.hashToken(new_refresh_token);
+      await this.usersService.updateRefreshToken(
+        user.id,
+        newHashedRefreshToken,
+      );
+
+      return {
+        access_token,
+        refresh_token: new_refresh_token,
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+
+  async logout(userId: string) {
+    await this.usersService.revokeRefreshToken(userId);
+    return { message: 'Logged out successfully' };
   }
 }

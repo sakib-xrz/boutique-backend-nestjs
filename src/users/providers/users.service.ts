@@ -21,6 +21,21 @@ export class UsersService {
     });
   }
 
+  async findByRefreshToken(token: string) {
+    return this.prismaService.user.findFirst({
+      where: { refresh_token: token },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        role: true,
+        email_verified: true,
+        created_at: true,
+      },
+    });
+  }
+
   async createUser(createUserDto: CreateUserDto) {
     const { name, email, password } = createUserDto;
     const user = await this.prismaService.user.create({
@@ -40,5 +55,35 @@ export class UsersService {
     });
 
     return user;
+  }
+
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: { refresh_token: refreshToken },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        email_verified: true,
+        created_at: true,
+      },
+    });
+  }
+
+  async revokeRefreshToken(userId: string) {
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: { refresh_token: null },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        email_verified: true,
+        created_at: true,
+      },
+    });
   }
 }
