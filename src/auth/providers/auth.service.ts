@@ -26,6 +26,7 @@ export class AuthService {
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
+
     const hashedPassword = await this.bcryptProvider.hashPassword(password);
 
     const user = await this.usersService.createUser({
@@ -100,6 +101,15 @@ export class AuthService {
 
       if (!user) {
         throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      // Check user status
+      if (user.is_active === false) {
+        throw new UnauthorizedException('User account is deactivated');
+      }
+
+      if (user.is_deleted === true) {
+        throw new UnauthorizedException('User account is deleted');
       }
 
       const payload = { sub: user.id, email: user.email, role: user.role };
