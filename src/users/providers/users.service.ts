@@ -15,9 +15,7 @@ export class UsersService {
         password: true,
         name: true,
         role: true,
-        is_active: true,
         is_deleted: true,
-        email_verified: true,
         created_at: true,
       },
     });
@@ -32,9 +30,7 @@ export class UsersService {
         password: true,
         name: true,
         role: true,
-        is_active: true,
         is_deleted: true,
-        email_verified: true,
         created_at: true,
       },
     });
@@ -53,7 +49,6 @@ export class UsersService {
         email: true,
         name: true,
         role: true,
-        email_verified: true,
         created_at: true,
       },
     });
@@ -70,7 +65,6 @@ export class UsersService {
         email: true,
         name: true,
         role: true,
-        email_verified: true,
         created_at: true,
       },
     });
@@ -85,7 +79,6 @@ export class UsersService {
         email: true,
         name: true,
         role: true,
-        email_verified: true,
         created_at: true,
       },
     });

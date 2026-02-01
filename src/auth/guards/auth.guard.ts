@@ -55,10 +55,6 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('User no longer exists');
       }
 
-      if (user.is_active === false) {
-        throw new UnauthorizedException('User account is deactivated');
-      }
-
       if (user.is_deleted === true) {
         throw new UnauthorizedException('User account is deleted');
       }

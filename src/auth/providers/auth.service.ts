@@ -61,11 +61,15 @@ export class AuthService {
 
     const isPasswordValid = await this.bcryptProvider.comparePassword(
       password,
-      user.password,
+      user.password as string,
     );
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (user.is_deleted === true) {
+      throw new UnauthorizedException('User account is deleted');
     }
 
     const payload = { sub: user.id, email: user.email, role: user.role };
@@ -101,11 +105,6 @@ export class AuthService {
 
       if (!user) {
         throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      // Check user status
-      if (user.is_active === false) {
-        throw new UnauthorizedException('User account is deactivated');
       }
 
       if (user.is_deleted === true) {

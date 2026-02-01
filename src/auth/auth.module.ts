@@ -6,6 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import { BcryptProvider } from './providers/bcrypt.provider';
 import { TokenProvider } from './providers/token.provider';
 import { JwtModule } from '@nestjs/jwt';
+import { GoogleAuthenticationController } from './social/google-authentication.controller';
+import { GoogleAuthenticationService } from './social/providers/google-authentication.service';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { JwtModule } from '@nestjs/jwt';
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController],
-  providers: [ConfigService, AuthService, BcryptProvider, TokenProvider],
+  controllers: [AuthController, GoogleAuthenticationController],
+  providers: [ConfigService, AuthService, BcryptProvider, TokenProvider, GoogleAuthenticationService],
 })
 export class AuthModule {}

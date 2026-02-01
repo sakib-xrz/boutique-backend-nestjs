@@ -78,13 +78,9 @@ export const UserScalarFieldEnum = {
   phone: 'phone',
   image_url: 'image_url',
   role: 'role',
-  email_verified: 'email_verified',
-  is_active: 'is_active',
   is_deleted: 'is_deleted',
   refresh_token: 'refresh_token',
-  password_reset_token: 'password_reset_token',
-  password_reset_expires: 'password_reset_expires',
-  password_reset_at: 'password_reset_at',
+  google_id: 'google_id',
   created_at: 'created_at',
   updated_at: 'updated_at'
 } as const
