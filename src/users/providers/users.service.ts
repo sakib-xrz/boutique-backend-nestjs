@@ -1,6 +1,7 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from '../../auth/dtos/create-user.dto';
 import { Injectable } from '@nestjs/common';
+import { CreateGoogleUserDto } from 'src/auth/social/dtos/create-google-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,20 @@ export class UsersService {
         id: true,
         email: true,
         password: true,
+        name: true,
+        role: true,
+        is_deleted: true,
+        created_at: true,
+      },
+    });
+  }
+
+  async findByGoogleId(googleId: string) {
+    return this.prismaService.user.findFirst({
+      where: { google_id: googleId },
+      select: {
+        id: true,
+        email: true,
         name: true,
         role: true,
         is_deleted: true,
@@ -43,6 +58,28 @@ export class UsersService {
         name,
         email,
         password,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        created_at: true,
+      },
+    });
+
+    return user;
+  }
+
+  async createGoogleUser(createGoogleUserDto: CreateGoogleUserDto) {
+    const { name, email, googleId } = createGoogleUserDto;
+
+    const user = await this.prismaService.user.create({
+      data: {
+        name,
+        email,
+        google_id: googleId,
+        image_url: createGoogleUserDto?.imageUrl || null,
       },
       select: {
         id: true,

@@ -37,11 +37,8 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email, role: user.role };
 
-    const access_token = this.tokenProvider.generateAccessToken(payload);
-    const refresh_token = this.tokenProvider.generateRefreshToken(payload);
-
-    const hashedRefreshToken = this.tokenProvider.hashToken(refresh_token);
-    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    const { access_token, refresh_token } =
+      await this.tokenProvider.generateTokens(payload);
 
     return {
       access_token,
@@ -74,11 +71,8 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email, role: user.role };
 
-    const access_token = this.tokenProvider.generateAccessToken(payload);
-    const refresh_token = this.tokenProvider.generateRefreshToken(payload);
-
-    const hashedRefreshToken = this.tokenProvider.hashToken(refresh_token);
-    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+    const { access_token, refresh_token } =
+      await this.tokenProvider.generateTokens(payload);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
@@ -112,16 +106,9 @@ export class AuthService {
       }
 
       const payload = { sub: user.id, email: user.email, role: user.role };
-      const access_token = this.tokenProvider.generateAccessToken(payload);
-      const new_refresh_token =
-        this.tokenProvider.generateRefreshToken(payload);
 
-      const newHashedRefreshToken =
-        this.tokenProvider.hashToken(new_refresh_token);
-      await this.usersService.updateRefreshToken(
-        user.id,
-        newHashedRefreshToken,
-      );
+      const { access_token, refresh_token: new_refresh_token } =
+        await this.tokenProvider.generateTokens(payload);
 
       return {
         access_token,

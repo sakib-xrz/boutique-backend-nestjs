@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
+import { UsersService } from 'src/users/providers/users.service';
 
 export interface TokenPayload {
   sub: string;
@@ -14,6 +15,7 @@ export class TokenProvider {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
   ) {}
 
   public generateAccessToken(payload: TokenPayload): string {
@@ -54,5 +56,18 @@ export class TokenProvider {
 
   public hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  public async generateTokens(payload: TokenPayload) {
+    const access_token = this.generateAccessToken(payload);
+    const refresh_token = this.generateRefreshToken(payload);
+
+    const hashedRefreshToken = this.hashToken(refresh_token);
+    await this.usersService.updateRefreshToken(payload.sub, hashedRefreshToken);
+
+    return {
+      access_token,
+      refresh_token,
+    };
   }
 }
