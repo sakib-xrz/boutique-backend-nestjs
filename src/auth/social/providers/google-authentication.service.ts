@@ -29,8 +29,19 @@ export class GoogleAuthenticationService implements OnModuleInit {
 
   public async authenticate(googleTokenDto: GoogleTokenDto) {
     try {
+      // Exchange the authorization code for tokens
+      const { tokens } = await this.oauthClient.getToken({
+        code: googleTokenDto.code,
+        redirect_uri: googleTokenDto.redirect_uri,
+      });
+
+      if (!tokens.id_token) {
+        throw new UnauthorizedException('No ID token received from Google');
+      }
+
+      // Verify the ID token
       const ticket = await this.oauthClient.verifyIdToken({
-        idToken: googleTokenDto.token,
+        idToken: tokens.id_token,
       });
 
       const payload = ticket.getPayload();
@@ -78,7 +89,7 @@ export class GoogleAuthenticationService implements OnModuleInit {
       ) {
         throw error;
       }
-      throw new UnauthorizedException('Invalid Google token');
+      throw new UnauthorizedException('Failed to authenticate with Google');
     }
   }
 
