@@ -56,6 +56,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (user.password === null) {
+      throw new UnauthorizedException(
+        'Please use social login to authenticate.',
+      );
+    }
+
     const isPasswordValid = await this.bcryptProvider.comparePassword(
       password,
       user.password as string,
