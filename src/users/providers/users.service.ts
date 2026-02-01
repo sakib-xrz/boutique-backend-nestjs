@@ -120,4 +120,22 @@ export class UsersService {
       },
     });
   }
+
+  async linkGoogleAccount(userId: string, googleId: string, imageUrl?: string) {
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: {
+        google_id: googleId,
+        ...(imageUrl && { image_url: imageUrl }),
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        is_deleted: true,
+        created_at: true,
+      },
+    });
+  }
 }

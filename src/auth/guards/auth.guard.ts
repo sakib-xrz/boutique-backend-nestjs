@@ -31,7 +31,7 @@ export class AuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
 
-    const token = this.extractHeaderFromHeader(request);
+    const token = this.extractTokenFromHeader(request);
 
     if (!token) {
       throw new UnauthorizedException('No token provided');
@@ -78,10 +78,9 @@ export class AuthGuard implements CanActivate {
     return true;
   }
 
-  private extractHeaderFromHeader(request: Request): string | undefined {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, token] = request.headers.authorization?.split(' ') ?? [];
+  private extractTokenFromHeader(request: Request): string | undefined {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
 
-    return token;
+    return type === 'Bearer' ? token : undefined;
   }
 }

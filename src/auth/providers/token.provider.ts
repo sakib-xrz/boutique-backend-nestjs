@@ -3,12 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { UsersService } from 'src/users/providers/users.service';
+import {
+  TokenPayload,
+  JwtPayload,
+  AuthTokens,
+} from '../interfaces/auth.interface';
 
-export interface TokenPayload {
-  sub: string;
-  email: string;
-  role: string;
-}
+export type { TokenPayload };
 
 @Injectable()
 export class TokenProvider {
@@ -46,19 +47,19 @@ export class TokenProvider {
     );
   }
 
-  public verifyRefreshToken(token: string): TokenPayload & { type: string } {
+  public verifyRefreshToken(token: string): JwtPayload {
     return this.jwtService.verify(token, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       audience: this.configService.get<string>('JWT_TOKEN_AUDIENCE'),
       issuer: this.configService.get<string>('JWT_TOKEN_ISSUER'),
-    }) as TokenPayload & { type: string };
+    }) as JwtPayload;
   }
 
   public hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  public async generateTokens(payload: TokenPayload) {
+  public async generateTokens(payload: TokenPayload): Promise<AuthTokens> {
     const access_token = this.generateAccessToken(payload);
     const refresh_token = this.generateRefreshToken(payload);
 

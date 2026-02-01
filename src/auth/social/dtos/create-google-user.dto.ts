@@ -25,5 +25,5 @@ export class CreateGoogleUserDto {
 
   @IsOptional()
   @IsString({ message: 'imageUrl must be a string' })
-  imageUrl: string;
+  imageUrl: string | null;
 }

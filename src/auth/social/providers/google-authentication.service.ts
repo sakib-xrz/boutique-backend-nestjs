@@ -1,13 +1,18 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  OnModuleInit,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { OAuth2Client } from 'google-auth-library';
 import { GoogleTokenDto } from '../dtos/google-token.dto';
 import { UsersService } from 'src/users/providers/users.service';
 import { TokenProvider } from 'src/auth/providers/token.provider';
 
 @Injectable()
 export class GoogleAuthenticationService implements OnModuleInit {
-  private oauthClientId: OAuth2Client;
+  private oauthClient: OAuth2Client;
 
   constructor(
     private readonly configService: ConfigService,
@@ -19,55 +24,78 @@ export class GoogleAuthenticationService implements OnModuleInit {
     const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
     const clientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
 
-    this.oauthClientId = new OAuth2Client(clientId, clientSecret);
+    this.oauthClient = new OAuth2Client(clientId, clientSecret);
   }
 
-  public async authentication(googleTokenDto: GoogleTokenDto) {
-    const ticket = await this.oauthClientId.verifyIdToken({
-      idToken: googleTokenDto.token,
-    });
+  public async authenticate(googleTokenDto: GoogleTokenDto) {
+    try {
+      const ticket = await this.oauthClient.verifyIdToken({
+        idToken: googleTokenDto.token,
+      });
 
-    const {
-      email,
-      name,
-      sub: googleId,
-      picture: imageUrl,
-    } = ticket.getPayload() as TokenPayload;
+      const payload = ticket.getPayload();
 
-    let user = await this.usersService.findByGoogleId(googleId);
+      if (!payload || !payload.email || !payload.sub) {
+        throw new UnauthorizedException('Invalid Google token payload');
+      }
 
-    if (user) {
-      const payload = { sub: user.id, email: user.email, role: user.role };
+      const { email, name, sub: googleId, picture: imageUrl } = payload;
 
-      const { access_token, refresh_token } =
-        await this.tokenProvider.generateTokens(payload);
+      let user = await this.usersService.findByGoogleId(googleId);
 
-      return {
-        access_token,
-        refresh_token,
-        user,
-      };
+      if (user) {
+        if (user.is_deleted) {
+          throw new UnauthorizedException('User account is deleted');
+        }
+
+        return this.generateAuthResponse(user);
+      }
+
+      const existingEmailUser = await this.usersService.findUserByEmail(email);
+
+      if (existingEmailUser) {
+        user = await this.usersService.linkGoogleAccount(
+          existingEmailUser.id,
+          googleId,
+          imageUrl,
+        );
+
+        return this.generateAuthResponse(user);
+      }
+
+      const newUser = await this.usersService.createGoogleUser({
+        name: name || email.split('@')[0],
+        email,
+        googleId,
+        imageUrl: imageUrl ?? null,
+      });
+
+      return this.generateAuthResponse(newUser);
+    } catch (error) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof ConflictException
+      ) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid Google token');
     }
-    const newUser = await this.usersService.createGoogleUser({
-      name: name!,
-      email: email!,
-      googleId,
-      imageUrl: imageUrl!,
-    });
+  }
 
-    const payload = {
-      sub: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    };
+  private async generateAuthResponse(user: {
+    id: string;
+    email: string;
+    role: string;
+  }) {
+    const tokenPayload = { sub: user.id, email: user.email, role: user.role };
 
     const { access_token, refresh_token } =
-      await this.tokenProvider.generateTokens(payload);
+      await this.tokenProvider.generateTokens(tokenPayload);
 
     return {
       access_token,
       refresh_token,
-      user: newUser,
+      user,
     };
   }
 }

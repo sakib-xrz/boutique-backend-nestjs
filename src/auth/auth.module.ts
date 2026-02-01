@@ -26,6 +26,12 @@ import { GoogleAuthenticationService } from './social/providers/google-authentic
     }),
   ],
   controllers: [AuthController, GoogleAuthenticationController],
-  providers: [ConfigService, AuthService, BcryptProvider, TokenProvider, GoogleAuthenticationService],
+  providers: [
+    ConfigService,
+    AuthService,
+    BcryptProvider,
+    TokenProvider,
+    GoogleAuthenticationService,
+  ],
 })
 export class AuthModule {}
