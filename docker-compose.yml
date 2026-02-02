@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # Use Coolify's port mapping; the "ports" section here is fine for local dev
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL} # Pull from Coolify Environment Variables
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - boutique-network
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # Avoid mapping 5432 to the host on a VPS for security unless needed
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-boutique}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-boutique}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - boutique-network
+
+networks:
+  boutique-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
