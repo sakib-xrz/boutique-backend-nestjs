@@ -9,15 +9,20 @@ WORKDIR /app
 # Stage 1: Build
 FROM base AS build
 COPY package*.json ./
-# Install ALL dependencies (including devDependencies like @nestjs/cli and prisma)
+
+# COPY THE PRISMA FOLDER FIRST
+# This allows the 'postinstall' script to find your schema
+COPY prisma ./prisma/
+
+# Install dependencies (this will now successfully run 'prisma generate')
 RUN npm install
+
 COPY . .
-# Generate Prisma Client and build the NestJS app
-RUN npx prisma generate
 RUN npm run build
 
 # Stage 2: Runtime
 FROM base AS runtime
+WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
