@@ -32,5 +32,5 @@ COPY --from=builder /app/prisma ./prisma
 ENV NODE_ENV=production
 EXPOSE 3000
 
-# Explicitly ensure DATABASE_URL is used by Prisma
-CMD ["sh", "-c", "npx prisma db push && node dist/main"]
+# Run migrations using prisma.config.ts and start the app
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
