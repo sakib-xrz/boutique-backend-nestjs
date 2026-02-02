@@ -31,12 +31,11 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install only production dependencies
-# Note: We still need Prisma in prod to keep the engine binaries
 RUN npm ci --omit=dev
 
 # Copy the generated Prisma Client from the builder stage
-# It lives inside node_modules, so we copy the production node_modules over
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Your schema.prisma outputs to ./src/generated/prisma
+COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
