@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Role } from 'src/generated/prisma';
+import { Role } from '@prisma/client';
 
 @ApiTags('users')
 @Controller('users')
