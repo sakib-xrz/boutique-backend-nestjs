@@ -8,6 +8,7 @@ services:
     ports:
       - '3000:3000'
     environment:
+      # CRITICAL: This mapping is required for the container to 'see' your Coolify variables
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - PORT=${PORT:-3000}
@@ -31,7 +32,6 @@ services:
     image: postgres:16-alpine
     container_name: boutique-db
     restart: unless-stopped
-    # Avoid mapping 5432 to the host for security on a VPS
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -39,7 +39,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      # Matches the error in your logs by ensuring the DB is ready for Prisma
       test:
         [
           'CMD-SHELL',
