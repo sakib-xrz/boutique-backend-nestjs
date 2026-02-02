@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { Prisma } from 'src/generated/prisma/client';
+import { Prisma } from 'src/generated/prisma';
 
 export interface ApiErrorResponse {
   success: boolean;
