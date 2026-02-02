@@ -27,11 +27,10 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/prisma.config.ts ./ 
 
 # Set production environment
 ENV NODE_ENV=production
-
-# Expose your configured port
 EXPOSE 8000
 
 # Run migrations and start the server
