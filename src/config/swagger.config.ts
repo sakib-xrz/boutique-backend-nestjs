@@ -6,8 +6,7 @@ export function setupSwagger(app: INestApplication, apiPrefix: string): void {
     .setTitle('Boutique Backend')
     .setDescription('Boutique Backend API documentation')
     .setVersion('1.0')
-    .addServer('http://localhost:8000')
-    .addServer('https://boutique-api.smilezbd.com')
+    .addServer(process.env.BACKEND_URL || 'http://localhost:8000')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'JWT-AUTH',

@@ -23,6 +23,10 @@ async function bootstrap() {
     'http://localhost:3000',
   );
   const corsOrigins = rawCorsOrigin.split(',').map((url) => url.trim());
+  const backendUrl = configService.get<string>(
+    'BACKEND_URL',
+    'http://localhost:8000',
+  );
 
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -30,7 +34,7 @@ async function bootstrap() {
   app.setGlobalPrefix(normalizedPrefix);
 
   app.enableCors({
-    origin: corsOrigins,
+    origin: [...corsOrigins, backendUrl],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
