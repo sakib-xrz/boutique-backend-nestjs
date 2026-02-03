@@ -1,101 +1,67 @@
-import * as express from 'express';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ConfigService } from '@nestjs/config';
+import * as express from 'express';
+import { AppModule } from './app.module';
+import { setupSwagger } from './config/swagger.config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
   const configService = app.get(ConfigService);
 
   const port = configService.get<number>('PORT', 8000);
   const apiPrefix = configService.get<string>('API_PREFIX', 'api/v1');
-  const normalizedApiPrefix = apiPrefix.startsWith('/')
+  const normalizedPrefix = apiPrefix.startsWith('/')
     ? apiPrefix
     : `/${apiPrefix}`;
-  const corsOrigin = configService.get<string>(
+
+  const rawCorsOrigin = configService.get<string>(
     'CORS_ORIGIN',
     'http://localhost:3000',
   );
-  const frontendUrls = corsOrigin?.split(',');
+  const corsOrigins = rawCorsOrigin.split(',').map((url) => url.trim());
 
-  // Enable body parsing for JSON and URL-encoded data
-  app.use(
-    (
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ) => {
-      return express.json()(req, res, next);
-    },
-  );
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-  app.use(
-    (
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ) => {
-      return express.urlencoded({ extended: true })(req, res, next);
-    },
-  );
+  app.setGlobalPrefix(normalizedPrefix);
 
-  // Set global API prefix
-  app.setGlobalPrefix(normalizedApiPrefix);
-
-  // Enable CORS
   app.enableCors({
-    origin: frontendUrls,
+    origin: corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-Requested-With',
+    ],
   });
 
-  // Global pipes
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
 
-  // Global interceptors
   app.useGlobalInterceptors(
     new LoggingInterceptor(),
     new TransformInterceptor(),
   );
-
-  // Global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Swagger documentation
-  const config = new DocumentBuilder()
-    .setTitle('Boutique Backend')
-    .setDescription('Boutique Backend API documentation')
-    .setVersion('1.0')
-    .addServer('http://localhost:8000')
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-
-  SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
+  setupSwagger(app, apiPrefix);
 
   await app.listen(port);
-  console.log(
-    `🚀 Application is running on: http://localhost:${port}/${apiPrefix}`,
-  );
-  console.log(
-    `📚 Swagger documentation: http://localhost:${port}/${apiPrefix}/docs`,
-  );
+
+  console.log(`🚀 API: http://localhost:${port}${normalizedPrefix}`);
+  console.log(`📚 Docs: http://localhost:${port}${normalizedPrefix}/docs`);
 }
 
 bootstrap();
