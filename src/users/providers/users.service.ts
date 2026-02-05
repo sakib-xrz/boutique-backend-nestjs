@@ -138,4 +138,18 @@ export class UsersService {
       },
     });
   }
+
+  async getMe(userId: string) {
+    return this.prismaService.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        is_deleted: true,
+        created_at: true,
+      },
+    });
+  }
 }
