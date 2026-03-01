@@ -146,6 +146,8 @@ export class UsersService {
         id: true,
         email: true,
         name: true,
+        phone: true,
+        image_url: true,
         role: true,
         is_deleted: true,
         created_at: true,
